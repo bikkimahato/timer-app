@@ -2,52 +2,63 @@ import React, { Component } from 'react';
 import './App.css';
 
 class App extends Component {
-
-  state = {
-
-    startInput: {
-      startValue: '',
-      startFlag: false,
-      inputStartHour: 0,
-      inputStartMinute: 0,
-    },
-    endInput: {
-      endValue: '',
-      endFlag: false,
-      inputEndHour: 0,
-      inputEndMinute: 0,
-    },
-    startButton: {
-      startLabel: 'Start',
-      startButtonFlag: null
-    },
-    pauseButton: {
-      pauseLabel: 'Pause',
-      pauseButtonFlag: null
-    },
-    resumeButton: {
-      resumeLabel: 'Resume',
-      resumeButtonFlag: null
-    },
-    stopButton: {
-      stopLabel: 'Stop',
-      stopButtonFlag: null
-    },
-    currentTimer: {
-      currentValue: '',
-      currentTimerFlag: false,
-      currentHour: 0,
-      currentMinute: 0,
-      currentSecond: 0
-    },
-    backGroundTimer: {
-      backGroundValue: '',
-      backGroundTimerFlag: null,
-      backGroundHour: null,
-      backGroundMinute: null,
-      backGroundSecond: null
-    }
+  componentWillMount() {
+    this.initialiseValues();
   }
+
+
+  initialiseValues = () => {
+
+    this.setState({
+      buttonLogic: {
+        showButton: false
+      },
+      startInput: {
+        startValue: '',
+        startFlag: false,
+        inputStartHour: 0,
+        inputStartMinute: 0,
+      },
+      endInput: {
+        endValue: '',
+        endFlag: false,
+        inputEndHour: 0,
+        inputEndMinute: 0,
+      },
+      startButton: {
+        startLabel: 'Start',
+        startButtonFlag: true,
+        showStartButtonFlag: true
+      },
+      pauseButton: {
+        pauseLabel: 'Pause',
+        pauseButtonFlag: false
+      },
+      resumeButton: {
+        resumeLabel: 'Resume',
+        resumeButtonFlag: false
+      },
+      stopButton: {
+        stopLabel: 'Stop',
+        stopButtonFlag: true
+      },
+      currentTimer: {
+        currentValue: '',
+        currentTimerFlag: false,
+        currentHour: 0,
+        currentMinute: 0,
+        currentSecond: 0
+      },
+      backGroundTimer: {
+        backGroundValue: '',
+        backGroundTimerFlag: false,
+        backGroundHour: 0,
+        backGroundMinute: 0,
+        backGroundSecond: 0
+      }
+    })
+  }
+
 
   //Function to accept input value from user
   handleChange = (e) => {
@@ -93,8 +104,23 @@ class App extends Component {
       startInput,
       endInput,
     });
+  }
 
+  validateButtonHandler = () => {
+    let { startInput, endInput, startButton } = this.state
+    const { startFlag } = startInput
+    const { endFlag } = endInput
 
+    if (startFlag && endFlag) {
+      startButton = {
+        ...startButton,
+        startButtonFlag: false
+      }
+    }
+
+    this.setState({
+      startButton
+    })
   }
 
   startTimerHandler = (e) => {
@@ -105,55 +131,104 @@ class App extends Component {
 
   //to store the initial start time to currenttimer value
   initialAssignTimer = () => {
-    let { startInput, currentTimer } = this.state
+    let { startInput, currentTimer, backGroundTimer, startButton, pauseButton, stopButton } = this.state
 
+    let { startButtonFlag } = startButton
     const { inputStartHour, inputStartMinute } = startInput
-    let { currentHour, currentMinute } = currentTimer;
+    let { currentHour, currentMinute, currentTimerFlag } = currentTimer;
+    let { backGroundHour, backGroundMinute, backGroundTimerFlag } = backGroundTimer
 
     currentHour = inputStartHour
     currentMinute = inputStartMinute
+    currentTimerFlag = true
+
+    backGroundHour = inputStartHour
+    backGroundMinute = inputStartMinute
+    backGroundTimerFlag = true
 
     //used spread operator so we have to assign it to a object or variable
     currentTimer = {
       ...currentTimer,
-      currentHour, currentMinute
+      currentHour, currentMinute, currentTimerFlag
+    }
+
+    backGroundTimer = {
+      ...backGroundTimer,
+      backGroundHour, backGroundMinute, backGroundTimerFlag
+    }
+
+    startButton = {
+      ...startButton,
+      startButtonFlag: false,
+      showStartButtonFlag: false
+    }
+
+    pauseButton = {
+      ...pauseButton,
+      pauseButtonFlag: true
+    }
+
+    stopButton = {
+      ...stopButton,
+      stopButtonFlag: false
     }
 
     this.setState({
-      currentTimer
+      currentTimer,
+      backGroundTimer,
+      startButton, pauseButton, stopButton
     })
   }
 
   //function to run for currentTimer
   currentTimeRunner = () => {
+    const { buttonLogic } = this.state
+    let { showButton } = buttonLogic
     setInterval(() => {
 
       //will calculate the updated time
       this.incrementTimer();
-    }, 10)
+    }, 1000)
+
+    //first time use for either showing pause button or removing start
+    this.setState({
+      buttonLogic: {
+        showButton: !showButton
+      }
+    })
   }
 
   incrementTimer = () => {
-    const { currentTimer, endInput } = this.state
+    let { currentTimer, endInput, backGroundTimer } = this.state
 
     const { inputEndHour, inputEndMinute } = endInput
     let { currentHour, currentMinute, currentSecond, currentTimerFlag } = currentTimer;
+    let { backGroundHour, backGroundMinute, backGroundSecond, backGroundTimerFlag } = backGroundTimer
 
-    if ((inputEndHour > currentHour) || ((inputEndHour === currentHour) && (inputEndMinute > currentMinute)))
-    {
-
-      currentTimerFlag = true;
-      currentSecond = currentSecond + 1;
-      if (currentSecond > 59) {
-        currentSecond = 0;
-        currentMinute += 1;
+    if ((inputEndHour > backGroundHour) || ((inputEndHour === backGroundHour) && (inputEndMinute > backGroundMinute))) {
+      backGroundSecond = backGroundSecond + 1;
+      if (backGroundSecond > 59) {
+        backGroundSecond = 0;
+        backGroundMinute += 1;
       }
-      if (currentMinute > 59) {
-        currentMinute = 0;
-        currentHour += 1;
+      if (backGroundMinute > 59) {
+        backGroundMinute = 0;
+        backGroundHour += 1;
+      }
+      if (currentTimerFlag) {
+        currentSecond = backGroundSecond
+        currentMinute = backGroundMinute
+        currentHour = backGroundHour
       }
 
       this.setState({
+        backGroundTimer: {
+          ...backGroundTimer,
+          backGroundSecond,
+          backGroundMinute,
+          backGroundHour,
+          backGroundTimerFlag
+        },
         currentTimer: {
           ...currentTimer,
           currentSecond,
@@ -165,43 +240,133 @@ class App extends Component {
     }
     else {
       currentTimerFlag = false;
+      currentTimer.currentHour = backGroundTimer.backGroundHour
+      currentTimer.currentMinute = backGroundTimer.backGroundMinute
+      currentTimer.currentSecond = backGroundTimer.backGroundSecond
+      this.setState({
+        currentTimer,
+        buttonLogic: {
+          showButton: false
+        },
+        startInput: {
+          startValue: '',
+          startFlag: false,
+          inputStartHour: 0,
+          inputStartMinute: 0,
+        },
+        endInput: {
+          endValue: '',
+          endFlag: false,
+          inputEndHour: 0,
+          inputEndMinute: 0,
+        },
+        startButton: {
+          startLabel: 'Start',
+          startButtonFlag: true,
+          showStartButtonFlag: true
+        },
+        resumeButton: {
+          resumeLabel: 'Resume',
+          resumeButtonFlag: false
+        },
+        stopButton: {
+          stopLabel: 'Stop',
+          stopButtonFlag: true
+        }
+      })
     }
+  }
+
+  pauseTimerHandler = () => {
+    const { currentTimer, pauseButton, resumeButton } = this.state;
+    let { currentTimerFlag } = currentTimer
+    currentTimerFlag = false
+
+
+    this.setState({
+      currentTimer: {
+        ...currentTimer,
+        currentTimerFlag
+      },
+      pauseButton: {
+        ...pauseButton,
+        pauseButtonFlag: false
+      },
+      resumeButton: {
+        ...resumeButton,
+        resumeButtonFlag: true
+      }
+    })
+  }
+
+  resumeTimerHandler = () => {
+    const { currentTimer, pauseButton, resumeButton } = this.state;
+    let { currentTimerFlag } = currentTimer
+    currentTimerFlag = true
+
+
+    this.setState({
+      currentTimer: {
+        ...currentTimer,
+        currentTimerFlag
+      },
+      pauseButton: {
+        ...pauseButton,
+        pauseButtonFlag: true
+      },
+      resumeButton: {
+        ...resumeButton,
+        resumeButtonFlag: false
+      }
+    })
   }
 
 
   stopTimerHandler = () => {
-
+    this.initialiseValues();
+    window.location.reload()
   }
 
   render() {
-    const { startInput, endInput, startButton, stopButton, currentTimer } = this.state
+    const { startInput, endInput, startButton, pauseButton, stopButton, resumeButton, currentTimer, backGroundTimer, buttonLogic, disabled } = this.state
+    const { showButton } = buttonLogic
     const { startValue } = startInput
     const { endValue } = endInput
-    const { startLabel } = startButton
-    const { stopLabel } = stopButton
+    let { startLabel, startButtonFlag, showStartButtonFlag } = startButton
+    const { pauseLabel, pauseButtonFlag } = pauseButton
+    const { stopLabel, stopButtonFlag } = stopButton
+    const { resumeLabel, resumeButtonFlag } = resumeButton
 
-    const { handleChange, startTimerHandler, stopTimerHandler } = this
+
+    const { handleChange, startTimerHandler, pauseTimerHandler, resumeTimerHandler, stopTimerHandler, validateButtonHandler } = this
 
     let { currentValue, currentHour, currentMinute, currentSecond } = currentTimer
-
+      
     currentValue = `${currentHour}:${currentMinute}:${currentSecond}`
 
-    // console.log(startInput, endInput)
-    console.log(currentTimer)
     return (
       <div className="App" >
         <div className="input-time-display">
           Start
-          <input type='time' name='startValue' value={startValue} onChange={handleChange}></input><br />
+          <input type='time' name='startValue' value={startValue} onChange={(e) => { handleChange(e); validateButtonHandler(); }}></input><br />
           End
-          <input type='time' name='endValue' value={endValue} onChange={handleChange}></input>
+          <input type='time' name='endValue' value={endValue} onChange={(e) => { handleChange(e); validateButtonHandler(); }}></input>
         </div>
         <div>
-          {currentValue}
+          Current {currentValue}
         </div>
         <div>
-          <input type='button' value={startLabel} onClick={startTimerHandler}></input><br />
-          <input type='button' value={stopLabel} onClick={stopTimerHandler}></input>
+
+          {
+            (!showButton && showStartButtonFlag) ? <input type='button' value={startLabel} onClick={startTimerHandler} disabled={startButtonFlag}></input>
+              : null
+          }
+
+          {(showButton && pauseButtonFlag) && <input type='button' value={pauseLabel} onClick={pauseTimerHandler}></input>}
+          {(showButton && resumeButtonFlag) && <input type='button' value={resumeLabel} onClick={resumeTimerHandler}></input>}
+
+          <br />
+          <input type='button' value={stopLabel} onClick={stopTimerHandler} disabled={stopButtonFlag}></input>
         </div>
 
       </div>
